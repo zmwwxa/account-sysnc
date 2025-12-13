@@ -37,7 +37,7 @@ function CopyOptions({ sourceRole, targetRoles, onCopy, disabled }) {
             onChange={(e) => setOptions({ ...options, autoBackup: e.target.checked })}
             disabled={disabled}
           />
-          <span>复制前自动备份（保留最近5个备份）</span>
+          <span>复制前自动备份</span>
         </label>
 
         <label className="option-item">
