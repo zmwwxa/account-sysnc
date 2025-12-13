@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Electron
+frontend/dist/
+frontend/dist-electron/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Config
+jx3_sync_config.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup
+userdata_backup/
+
+# Logs
+*.log
