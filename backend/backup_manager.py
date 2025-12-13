@@ -12,13 +12,13 @@ from .models import RoleInfo, BackupInfo
 class BackupManager:
     """备份管理器"""
 
-    def __init__(self, userdata_path: str, max_backups: int = 5, backup_dir: str = None):
+    def __init__(self, userdata_path: str, max_backups: int = None, backup_dir: str = None):
         """
         初始化备份管理器
 
         Args:
             userdata_path: userdata 目录路径
-            max_backups: 每个角色最多保留的备份数量
+            max_backups: 每个角色最多保留的备份数量，None表示不限制
             backup_dir: 自定义备份目录路径，如果不指定则使用默认路径
         """
         self.userdata_path = Path(userdata_path)
@@ -72,11 +72,15 @@ class BackupManager:
 
     def cleanup_old_backups(self, role: RoleInfo):
         """
-        清理旧备份，只保留最近的 max_backups 个
+        清理旧备份，只保留最近的 max_backups 个（如果设置了限制）
 
         Args:
             role: 角色信息
         """
+        # 如果不限制备份数量，则不清理
+        if self.max_backups is None:
+            return
+
         prefix = f"{role.account}_{role.region}_{role.server}_{role.role}_"
         backups = sorted(
             [d for d in self.backup_dir.iterdir()

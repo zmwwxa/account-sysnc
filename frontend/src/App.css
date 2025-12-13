@@ -712,3 +712,18 @@ button:disabled {
 .context-menu-item:active {
   background: #e0e0e0;
 }
+
+/* 还原对话框 */
+.restore-dialog {
+  max-width: 500px;
+}
+
+.restore-dialog .modal-body {
+  padding: 20px;
+}
+
+.restore-dialog select {
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+}

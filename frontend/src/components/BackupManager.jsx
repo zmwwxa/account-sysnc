@@ -6,20 +6,36 @@ const { ipcRenderer } = window.require('electron');
 function BackupManager({ onClose }) {
   const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [roles, setRoles] = useState([]);
+  const [showRestoreDialog, setShowRestoreDialog] = useState(false);
+  const [selectedBackup, setSelectedBackup] = useState(null);
+  const [selectedRole, setSelectedRole] = useState('');
 
   useEffect(() => {
     loadBackups();
+    loadRoles();
   }, []);
 
   const loadBackups = async () => {
     setLoading(true);
     try {
-      const result = await ApiService.listBackups(20);
+      const result = await ApiService.listBackups();
       setBackups(result.backups);
     } catch (error) {
       alert(`加载备份失败: ${error.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadRoles = async () => {
+    try {
+      const result = await ApiService.scanRoles();
+      if (result.success) {
+        setRoles(result.roles);
+      }
+    } catch (error) {
+      console.error('加载角色失败:', error);
     }
   };
 
@@ -35,6 +51,46 @@ function BackupManager({ onClose }) {
       }
     } catch (error) {
       alert(`删除失败: ${error.message}`);
+    }
+  };
+
+  const handleRestore = (backup) => {
+    setSelectedBackup(backup);
+    setShowRestoreDialog(true);
+  };
+
+  const confirmRestore = async () => {
+    if (!selectedRole) {
+      alert('请选择目标角色');
+      return;
+    }
+
+    const role = roles.find(r => r.path === selectedRole);
+    if (!role) {
+      alert('未找到选中的角色');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `确认要将备份还原到以下角色吗？\n\n` +
+      `目标角色: ${role.account}-${role.region}-${role.server}-${role.role}\n\n` +
+      `警告：此操作将覆盖目标角色的当前配置！`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const result = await ApiService.restoreBackup(selectedBackup.name, role);
+      if (result.success) {
+        alert('还原成功！');
+        setShowRestoreDialog(false);
+        setSelectedBackup(null);
+        setSelectedRole('');
+      } else {
+        alert(`还原失败: ${result.message}`);
+      }
+    } catch (error) {
+      alert(`还原失败: ${error.message}`);
     }
   };
 
@@ -57,52 +113,114 @@ function BackupManager({ onClose }) {
     return `${mb.toFixed(2)} MB`;
   };
 
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>备份管理</h2>
-          <button className="btn-close" onClick={onClose}>×</button>
-        </div>
+  const roleDisplay = (role) =>
+    `${role.account}-${role.region}-${role.server}-${role.role}`;
 
-        <div className="modal-body">
-          {loading ? (
-            <div className="loading">加载中...</div>
-          ) : backups.length === 0 ? (
-            <div className="empty">暂无备份</div>
-          ) : (
-            <div className="backup-list">
-              {backups.map(backup => (
-                <div key={backup.name} className="backup-item">
-                  <div className="backup-info">
-                    <div className="backup-name">{backup.role_info}</div>
-                    <div className="backup-meta">
-                      <span>{backup.created_at}</span>
-                      <span>{formatSize(backup.size)}</span>
+  return (
+    <>
+      <div className="modal-overlay" onClick={onClose}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-header">
+            <h2>备份管理</h2>
+            <button className="btn-close" onClick={onClose}>×</button>
+          </div>
+
+          <div className="modal-body">
+            {loading ? (
+              <div className="loading">加载中...</div>
+            ) : backups.length === 0 ? (
+              <div className="empty">暂无备份</div>
+            ) : (
+              <div className="backup-list">
+                {backups.map(backup => (
+                  <div key={backup.name} className="backup-item">
+                    <div className="backup-info">
+                      <div className="backup-name">{backup.role_info}</div>
+                      <div className="backup-meta">
+                        <span>{backup.created_at}</span>
+                        <span>{formatSize(backup.size)}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        className="btn-primary btn-small"
+                        onClick={() => handleRestore(backup)}
+                      >
+                        还原
+                      </button>
+                      <button
+                        className="btn-danger btn-small"
+                        onClick={() => handleDelete(backup.name)}
+                      >
+                        删除
+                      </button>
                     </div>
                   </div>
-                  <button
-                    className="btn-danger btn-small"
-                    onClick={() => handleDelete(backup.name)}
-                  >
-                    删除
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        <div className="modal-footer">
-          <button className="btn-primary" onClick={handleOpenBackupFolder}>
-            打开备份位置
-          </button>
-          <button className="btn-secondary" onClick={onClose}>
-            关闭
-          </button>
+          <div className="modal-footer">
+            <button className="btn-primary" onClick={handleOpenBackupFolder}>
+              打开备份位置
+            </button>
+            <button className="btn-secondary" onClick={onClose}>
+              关闭
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+
+      {showRestoreDialog && (
+        <div className="modal-overlay" onClick={() => setShowRestoreDialog(false)}>
+          <div className="modal-content restore-dialog" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>还原备份</h2>
+              <button className="btn-close" onClick={() => setShowRestoreDialog(false)}>×</button>
+            </div>
+
+            <div className="modal-body">
+              <div style={{ marginBottom: '16px' }}>
+                <strong>备份:</strong> {selectedBackup?.role_info}
+              </div>
+              <div style={{ marginBottom: '8px' }}>
+                <strong>选择目标角色:</strong>
+              </div>
+              <select
+                className="role-select"
+                value={selectedRole}
+                onChange={(e) => setSelectedRole(e.target.value)}
+                style={{ width: '100%', padding: '8px', fontSize: '13px' }}
+              >
+                <option value="">请选择角色</option>
+                {roles.map(role => (
+                  <option key={role.path} value={role.path}>
+                    {roleDisplay(role)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="modal-footer">
+              <button
+                className="btn-primary"
+                onClick={confirmRestore}
+                disabled={!selectedRole}
+              >
+                确认还原
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => setShowRestoreDialog(false)}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
