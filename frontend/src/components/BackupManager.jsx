@@ -62,6 +62,27 @@ function BackupManager({ onClose }) {
     setShowRestoreDialog(true);
   };
 
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+
+    // 自动选择第一个匹配的角色
+    if (value) {
+      const filtered = roles.filter(role => {
+        const displayText = roleDisplay(role).toLowerCase();
+        return displayText.includes(value.toLowerCase());
+      });
+
+      if (filtered.length > 0) {
+        setSelectedRole(filtered[0].path);
+      } else {
+        setSelectedRole('');
+      }
+    } else {
+      setSelectedRole('');
+    }
+  };
+
   const confirmRestore = async () => {
     if (!selectedRole) {
       alert('请选择目标角色');
@@ -204,7 +225,7 @@ function BackupManager({ onClose }) {
                 className="search-input"
                 placeholder="输入角色名、账号、大区或服务器进行搜索..."
                 value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
+                onChange={handleSearchChange}
                 style={{ width: '100%', marginBottom: '12px' }}
               />
 
