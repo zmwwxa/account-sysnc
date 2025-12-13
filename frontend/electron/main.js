@@ -1,7 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, protocol } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const kill = require('tree-kill');
+const fs = require('fs');
 
 let mainWindow;
 let pythonProcess;
@@ -112,6 +113,15 @@ ipcMain.handle('shell:openPath', async (event, folderPath) => {
 
 // 应用启动
 app.whenReady().then(async () => {
+  // 注册本地资源协议
+  protocol.registerFileProtocol('local-resource', (request, callback) => {
+    const url = request.url.replace('local-resource://', '');
+    const resourcePath = app.isPackaged
+      ? path.join(process.resourcesPath, url)
+      : path.join(__dirname, '..', 'public', url);
+    callback({ path: resourcePath });
+  });
+
   // 启动 Python 后端
   await startPythonBackend();
 
@@ -127,24 +137,58 @@ app.whenReady().then(async () => {
 
 // 应用退出
 app.on('window-all-closed', () => {
-  // 关闭 Python 进程及其所有子进程
-  if (pythonProcess && pythonProcess.pid) {
-    kill(pythonProcess.pid, 'SIGTERM', (err) => {
-      if (err) {
-        console.error('Failed to kill process tree:', err);
-        // 如果 SIGTERM 失败，使用 SIGKILL 强制终止
-        kill(pythonProcess.pid, 'SIGKILL');
-      }
-    });
-  }
-
   if (process.platform !== 'darwin') {
     app.quit();
   }
 });
 
-app.on('will-quit', () => {
+app.on('before-quit', (event) => {
+  // 阻止默认退出，先清理进程
   if (pythonProcess && pythonProcess.pid) {
-    kill(pythonProcess.pid, 'SIGKILL');
+    event.preventDefault();
+
+    console.log('Killing Python process tree, PID:', pythonProcess.pid);
+
+    // 在Windows上，强制使用taskkill来确保进程被杀死
+    if (process.platform === 'win32') {
+      const { exec } = require('child_process');
+      exec(`taskkill /F /T /PID ${pythonProcess.pid}`, (error) => {
+        if (error) {
+          console.error('taskkill error:', error);
+        }
+        // 额外确保 jx3-backend.exe 被杀死
+        exec('taskkill /F /IM jx3-backend.exe /T', (err2) => {
+          if (err2 && !err2.message.includes('not found')) {
+            console.error('Failed to kill jx3-backend.exe:', err2);
+          }
+          setTimeout(() => {
+            pythonProcess = null;
+            app.quit();
+          }, 500);
+        });
+      });
+    } else {
+      // 非Windows平台使用tree-kill
+      kill(pythonProcess.pid, 'SIGKILL', (err) => {
+        if (err) {
+          console.error('Failed to kill process tree:', err);
+        }
+        setTimeout(() => {
+          pythonProcess = null;
+          app.quit();
+        }, 500);
+      });
+    }
+  }
+});
+
+app.on('will-quit', () => {
+  // 最后的保障，确保进程被杀死
+  if (pythonProcess && pythonProcess.pid) {
+    try {
+      kill(pythonProcess.pid, 'SIGKILL');
+    } catch (err) {
+      console.error('Error in will-quit:', err);
+    }
   }
 });

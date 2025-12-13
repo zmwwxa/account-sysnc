@@ -5,6 +5,7 @@ import RoleSelector from './components/RoleSelector';
 import CopyOptions from './components/CopyOptions';
 import BackupManager from './components/BackupManager';
 import SuccessDialog from './components/SuccessDialog';
+import GuideDialog from './components/GuideDialog';
 import './App.css';
 
 function App() {
@@ -17,10 +18,16 @@ function App() {
   const [showBackupManager, setShowBackupManager] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successInfo, setSuccessInfo] = useState({ title: '', message: '', details: [] });
+  const [showGuide, setShowGuide] = useState(false);
 
   // 加载配置
   useEffect(() => {
     loadConfig();
+    // 检查是否需要显示使用说明
+    const hideGuide = localStorage.getItem('hideGuide');
+    if (!hideGuide) {
+      setShowGuide(true);
+    }
   }, []);
 
   const loadConfig = async () => {
@@ -195,6 +202,11 @@ function App() {
           onClose={() => setShowSuccess(false)}
         />
       )}
+
+      <GuideDialog
+        show={showGuide}
+        onClose={() => setShowGuide(false)}
+      />
     </div>
   );
 }

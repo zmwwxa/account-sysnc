@@ -1,6 +1,6 @@
 {
   "name": "jx3-role-sync",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "剑网三角色配置同步工具",
   "main": "electron/main.js",
   "scripts": {
@@ -39,6 +39,10 @@
       {
         "from": "../backend/dist/jx3-backend.exe",
         "to": "backend/jx3-backend.exe"
+      },
+      {
+        "from": "public/game-settings.png",
+        "to": "game-settings.png"
       }
     ],
     "win": {
