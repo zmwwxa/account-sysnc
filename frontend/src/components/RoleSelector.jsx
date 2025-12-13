@@ -119,7 +119,10 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
       </div>
 
       <div className="target-section">
-        <h2>目标角色（可多选）</h2>
+        <h2>
+          <span>目标角色（可多选）</span>
+          <span className="selection-count">已选 {targetRoles.length} 个</span>
+        </h2>
 
         <input
           type="text"
@@ -181,10 +184,6 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
               <span>{roleDisplay(role)}</span>
             </div>
           ))}
-        </div>
-
-        <div className="selection-info">
-          已选择 {targetRoles.length} 个目标角色
         </div>
       </div>
     </div>

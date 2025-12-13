@@ -139,7 +139,7 @@ function App() {
 
       <div className="app-container">
         {message && (
-          <div className={`message ${loading ? 'loading' : ''}`}>
+          <div className="message">
             {message}
           </div>
         )}
@@ -162,24 +162,24 @@ function App() {
               disabled={loading}
             />
 
-            <CopyOptions
-              sourceRole={sourceRole}
-              targetRoles={targetRoles}
-              onCopy={handleCopy}
-              disabled={loading || !sourceRole || targetRoles.length === 0}
-            />
+            <div className="bottom-actions">
+              <CopyOptions
+                sourceRole={sourceRole}
+                targetRoles={targetRoles}
+                onCopy={handleCopy}
+                disabled={loading || !sourceRole || targetRoles.length === 0}
+              />
+
+              <button
+                className="btn-secondary btn-backup"
+                onClick={() => setShowBackupManager(true)}
+                disabled={loading}
+              >
+                备份管理
+              </button>
+            </div>
           </>
         )}
-
-        <div className="footer-actions">
-          <button
-            className="btn-secondary"
-            onClick={() => setShowBackupManager(true)}
-            disabled={loading}
-          >
-            备份管理
-          </button>
-        </div>
       </div>
 
       {showBackupManager && (
