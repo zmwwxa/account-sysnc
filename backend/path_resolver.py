@@ -59,6 +59,7 @@ class PathResolver:
     def resolve_game_path(base_path: str) -> Optional[Path]:
         """
         从基础路径解析游戏 userdata 路径
+        使用路径穿透方式查找 bin/zhcn_hd/userdata 或 bin/zhcn/userdata
 
         Args:
             base_path: 游戏根目录或 SeasunGame.exe 路径
@@ -72,15 +73,77 @@ class PathResolver:
         if base_path.is_file() and base_path.suffix.lower() == '.exe':
             base_path = base_path.parent
 
-        # 尝试可能的 userdata 路径
-        possible_paths = [
-            base_path / "Game" / "JX3" / "bin" / "zhcn_hd" / "userdata",
-            base_path / "Game" / "JX3" / "bin" / "zhcn" / "userdata",
+        print(f"[DEBUG] 开始查找 userdata，起始路径: {base_path}")
+
+        # 目标路径模式（优先高清版）
+        target_patterns = [
+            ("bin", "zhcn_hd", "userdata"),
+            ("bin", "zhcn", "userdata"),
         ]
 
-        for path in possible_paths:
-            if path.exists() and path.is_dir():
-                return path
+        # 策略1：从当前路径向上遍历，查找包含目标路径的位置
+        current = base_path
+        max_depth = 10  # 最多向上查找10层
+
+        for level in range(max_depth):
+            print(f"[DEBUG] 向上查找第 {level} 层: {current}")
+
+            # 在当前层级查找目标路径
+            for pattern in target_patterns:
+                candidate = current
+                for part in pattern:
+                    candidate = candidate / part
+
+                if candidate.exists() and candidate.is_dir():
+                    print(f"[DEBUG] 找到 userdata 路径: {candidate}")
+                    return candidate
+
+            # 向上一层
+            parent = current.parent
+            if parent == current:  # 已到根目录
+                break
+            current = parent
+
+        # 策略2：向下递归查找（深度优先）
+        print(f"[DEBUG] 向上查找失败，尝试向下递归查找...")
+        return PathResolver._search_userdata_downward(base_path, target_patterns)
+
+    @staticmethod
+    def _search_userdata_downward(base_path: Path, target_patterns: list, max_depth: int = 5) -> Optional[Path]:
+        """
+        向下递归查找 userdata 路径
+
+        Args:
+            base_path: 起始路径
+            target_patterns: 目标路径模式列表
+            max_depth: 最大递归深度
+
+        Returns:
+            userdata 目录路径，失败返回 None
+        """
+        if max_depth <= 0:
+            return None
+
+        try:
+            # 检查当前路径是否匹配任何模式
+            for pattern in target_patterns:
+                candidate = base_path
+                for part in pattern:
+                    candidate = candidate / part
+
+                if candidate.exists() and candidate.is_dir():
+                    print(f"[DEBUG] 向下找到 userdata 路径: {candidate}")
+                    return candidate
+
+            # 递归查找子目录
+            for item in base_path.iterdir():
+                if item.is_dir() and not item.name.startswith('.'):
+                    result = PathResolver._search_userdata_downward(item, target_patterns, max_depth - 1)
+                    if result:
+                        return result
+
+        except (PermissionError, OSError) as e:
+            print(f"[DEBUG] 跳过目录 {base_path}: {e}")
 
         return None
 
