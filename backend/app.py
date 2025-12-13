@@ -244,6 +244,16 @@ def delete_backup():
     return jsonify(result)
 
 
+
+@app.route('/api/backup/clear-all', methods=['POST'])
+def clear_all_backups():
+    """清空所有备份"""
+    if not backup_manager:
+        return jsonify({'error': '未设置游戏路径'}), 400
+
+    result = backup_manager.clear_all_backups()
+    return jsonify(result)
+
 # ===== 配置相关 API =====
 
 @app.route('/api/config/get', methods=['GET'])

@@ -215,7 +215,7 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
 
       <div className="target-section">
         <h2>
-          <span>目标角色（可多选）</span>
+          <span>目标角色（可多选）-- 右键可打开角色配置文件夹</span>
           <span className="selection-count">已选 {targetRoles.length} 个</span>
         </h2>
 
