@@ -1,6 +1,6 @@
 {
   "name": "jx3-role-sync",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "剑网三角色配置同步工具",
   "main": "electron/main.js",
   "scripts": {
