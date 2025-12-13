@@ -672,3 +672,43 @@ button:disabled {
 .detail-item:last-child {
   border-bottom: none;
 }
+
+/* 打开文件夹按钮 */
+.btn-open-folder {
+  width: 100%;
+  margin-top: 8px;
+  background: #667eea;
+  color: white;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.btn-open-folder:hover:not(:disabled) {
+  background: #5568d3;
+}
+
+/* 右键菜单 */
+.context-menu {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 150px;
+  padding: 4px 0;
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  color: #333;
+  transition: background 0.2s ease;
+}
+
+.context-menu-item:hover {
+  background: #f0f0f0;
+}
+
+.context-menu-item:active {
+  background: #e0e0e0;
+}

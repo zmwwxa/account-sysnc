@@ -121,6 +121,15 @@ class ApiService {
     });
   }
 
+  // ===== 文件夹操作 =====
+
+  static async openFolder(path) {
+    return this.request('/folder/open', {
+      method: 'POST',
+      body: JSON.stringify({ path }),
+    });
+  }
+
   // ===== 健康检查 =====
 
   static async healthCheck() {

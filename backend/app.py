@@ -7,6 +7,8 @@ from flask_cors import CORS
 from pathlib import Path
 import sys
 import os
+import subprocess
+import platform
 
 # 添加父目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -259,6 +261,41 @@ def set_config():
 
     return jsonify({'success': True})
 
+
+
+
+# ===== 文件夹操作 API =====
+
+@app.route('/api/folder/open', methods=['POST'])
+def open_folder():
+    """打开文件夹"""
+    data = request.json
+    folder_path = data.get('path')
+    
+    if not folder_path:
+        return jsonify({'error': '缺少路径参数'}), 400
+    
+    folder_path = Path(folder_path)
+    
+    # 获取角色配置文件所在的文件夹（去掉文件名）
+    if folder_path.is_file():
+        folder_path = folder_path.parent
+    
+    if not folder_path.exists():
+        return jsonify({'error': '文件夹不存在'}), 400
+    
+    try:
+        system = platform.system()
+        if system == 'Windows':
+            os.startfile(str(folder_path))
+        elif system == 'Darwin':  # macOS
+            subprocess.run(['open', str(folder_path)])
+        else:  # Linux
+            subprocess.run(['xdg-open', str(folder_path)])
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 # ===== 健康检查 =====
 
