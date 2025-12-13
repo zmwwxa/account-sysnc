@@ -32,8 +32,13 @@
     },
     "files": [
       "dist/**/*",
-      "electron/**/*",
-      "../backend/**/*"
+      "electron/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../backend/dist/jx3-backend.exe",
+        "to": "backend/jx3-backend.exe"
+      }
     ],
     "win": {
       "target": "nsis",
@@ -41,7 +46,10 @@
     },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "剑网三角色配置同步工具"
     }
   }
 }

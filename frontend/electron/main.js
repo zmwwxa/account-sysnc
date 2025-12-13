@@ -7,10 +7,22 @@ let pythonProcess;
 
 // 启动 Python 后端服务
 function startPythonBackend() {
-  const pythonScript = path.join(__dirname, '..', '..', 'backend', 'app.py');
+  let pythonBackend;
 
-  // 使用 -B 参数禁用 .pyc 文件,确保加载最新代码
-  pythonProcess = spawn('python', ['-B', pythonScript]);
+  // 检查是否是打包后的环境
+  const isPacked = app.isPackaged;
+
+  if (isPacked) {
+    // 打包后：使用打包的 exe 文件
+    pythonBackend = path.join(process.resourcesPath, 'backend', 'jx3-backend.exe');
+    console.log('Using packaged Python backend:', pythonBackend);
+    pythonProcess = spawn(pythonBackend);
+  } else {
+    // 开发环境：使用 Python 脚本
+    const pythonScript = path.join(__dirname, '..', '..', 'backend', 'app.py');
+    console.log('Using Python script:', pythonScript);
+    pythonProcess = spawn('python', ['-B', pythonScript]);
+  }
 
   pythonProcess.stdout.on('data', (data) => {
     console.log(`Python: ${data}`);
