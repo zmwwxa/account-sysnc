@@ -10,6 +10,7 @@ function BackupManager({ onClose }) {
   const [showRestoreDialog, setShowRestoreDialog] = useState(false);
   const [selectedBackup, setSelectedBackup] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     loadBackups();
@@ -56,6 +57,8 @@ function BackupManager({ onClose }) {
 
   const handleRestore = (backup) => {
     setSelectedBackup(backup);
+    setSelectedRole('');
+    setSearchText('');
     setShowRestoreDialog(true);
   };
 
@@ -86,6 +89,7 @@ function BackupManager({ onClose }) {
         setShowRestoreDialog(false);
         setSelectedBackup(null);
         setSelectedRole('');
+        setSearchText('');
       } else {
         alert(`还原失败: ${result.message}`);
       }
@@ -115,6 +119,13 @@ function BackupManager({ onClose }) {
 
   const roleDisplay = (role) =>
     `${role.account}-${role.region}-${role.server}-${role.role}`;
+
+  // 过滤角色列表
+  const filteredRoles = roles.filter(role => {
+    if (!searchText) return true;
+    const displayText = roleDisplay(role).toLowerCase();
+    return displayText.includes(searchText.toLowerCase());
+  });
 
   return (
     <>
@@ -184,22 +195,57 @@ function BackupManager({ onClose }) {
               <div style={{ marginBottom: '16px' }}>
                 <strong>备份:</strong> {selectedBackup?.role_info}
               </div>
+
+              <div style={{ marginBottom: '8px' }}>
+                <strong>搜索角色:</strong>
+              </div>
+              <input
+                type="text"
+                className="search-input"
+                placeholder="输入角色名、账号、大区或服务器进行搜索..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                style={{ width: '100%', marginBottom: '12px' }}
+              />
+
               <div style={{ marginBottom: '8px' }}>
                 <strong>选择目标角色:</strong>
+                {filteredRoles.length > 0 && searchText && (
+                  <span style={{ marginLeft: '8px', fontSize: '12px', color: '#667eea' }}>
+                    找到 {filteredRoles.length} 个匹配的角色
+                  </span>
+                )}
               </div>
               <select
                 className="role-select"
                 value={selectedRole}
                 onChange={(e) => setSelectedRole(e.target.value)}
-                style={{ width: '100%', padding: '8px', fontSize: '13px' }}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  fontSize: '13px',
+                  maxHeight: '200px'
+                }}
+                size={Math.min(filteredRoles.length, 8)}
               >
                 <option value="">请选择角色</option>
-                {roles.map(role => (
+                {filteredRoles.map(role => (
                   <option key={role.path} value={role.path}>
                     {roleDisplay(role)}
                   </option>
                 ))}
               </select>
+
+              {filteredRoles.length === 0 && searchText && (
+                <div style={{
+                  marginTop: '8px',
+                  color: '#999',
+                  fontSize: '12px',
+                  textAlign: 'center'
+                }}>
+                  未找到匹配的角色
+                </div>
+              )}
             </div>
 
             <div className="modal-footer">
@@ -212,7 +258,10 @@ function BackupManager({ onClose }) {
               </button>
               <button
                 className="btn-secondary"
-                onClick={() => setShowRestoreDialog(false)}
+                onClick={() => {
+                  setShowRestoreDialog(false);
+                  setSearchText('');
+                }}
               >
                 取消
               </button>
