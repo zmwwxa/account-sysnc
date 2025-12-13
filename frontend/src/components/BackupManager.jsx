@@ -134,36 +134,6 @@ function BackupManager({ onClose }) {
   };
 
 
-  const handleClearAll = async () => {
-    if (backups.length === 0) {
-      alert('当前没有备份需要清空');
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `确认要清空所有备份吗？
-
-` +
-      `当前共有 ${backups.length} 个备份
-
-` +
-      `警告：此操作不可撤销！`
-    );
-
-    if (!confirmed) return;
-
-    try {
-      const result = await ApiService.clearAllBackups();
-      if (result.success) {
-        alert(`成功清空 ${result.count} 个备份`);
-        loadBackups();
-      } else {
-        alert(`清空备份失败: ${result.message}`);
-      }
-    } catch (error) {
-      alert(`清空备份失败: ${error.message}`);
-    }
-  };
 
   const formatSize = (bytes) => {
     const mb = bytes / (1024 * 1024);
@@ -228,9 +198,6 @@ function BackupManager({ onClose }) {
           <div className="modal-footer">
             <button className="btn-primary" onClick={handleOpenBackupFolder}>
               打开备份位置
-            </button>
-            <button className="btn-danger" onClick={handleClearAll}>
-              清空备份
             </button>
             <button className="btn-secondary" onClick={onClose}>
               关闭

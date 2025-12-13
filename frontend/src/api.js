@@ -108,11 +108,6 @@ class ApiService {
     });
   }
 
-  static async clearAllBackups() {
-    return this.request('/backup/clear-all', {
-      method: 'POST',
-    });
-  }
 
   // ===== 配置相关 =====
 

@@ -9,7 +9,8 @@ let pythonProcess;
 function startPythonBackend() {
   const pythonScript = path.join(__dirname, '..', '..', 'backend', 'app.py');
 
-  pythonProcess = spawn('python', [pythonScript]);
+  // 使用 -B 参数禁用 .pyc 文件,确保加载最新代码
+  pythonProcess = spawn('python', ['-B', pythonScript]);
 
   pythonProcess.stdout.on('data', (data) => {
     console.log(`Python: ${data}`);

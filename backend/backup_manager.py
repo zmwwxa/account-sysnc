@@ -196,32 +196,6 @@ class BackupManager:
             return {'success': False, 'message': f'删除失败: {str(e)}'}
 
 
-    def clear_all_backups(self) -> dict:
-        """
-        清空所有备份
-
-        Returns:
-            操作结果 {'success': bool, 'message': str, 'count': int}
-        """
-        try:
-            backup_dirs = [d for d in self.backup_dir.iterdir() if d.is_dir()]
-            count = len(backup_dirs)
-
-            if count == 0:
-                return {'success': True, 'message': '没有备份需要清空', 'count': 0}
-
-            # 删除所有备份目录
-            for backup_dir in backup_dirs:
-                try:
-                    shutil.rmtree(backup_dir)
-                except Exception as e:
-                    print(f"删除备份 {backup_dir.name} 失败: {e}")
-
-            return {'success': True, 'message': f'已清空 {count} 个备份', 'count': count}
-
-        except Exception as e:
-            return {'success': False, 'message': f'清空备份失败: {str(e)}', 'count': 0}
-
     @staticmethod
     def _get_dir_size(path: Path) -> int:
         """获取目录大小（字节）"""
