@@ -1,18 +1,28 @@
 import React, { useState } from 'react';
+import ConfirmDialog from './ConfirmDialog';
 
-function CopyOptions({ onCopy, disabled }) {
+function CopyOptions({ sourceRole, targetRoles, onCopy, disabled }) {
   const [options, setOptions] = useState({
     autoBackup: true,
     confirmBeforeCopy: true
   });
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const handleCopy = () => {
     if (options.confirmBeforeCopy) {
-      const confirmed = window.confirm('确认开始同步吗？');
-      if (!confirmed) return;
+      setShowConfirm(true);
+    } else {
+      onCopy(options);
     }
+  };
 
+  const handleConfirm = () => {
+    setShowConfirm(false);
     onCopy(options);
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
   };
 
   return (
@@ -46,8 +56,18 @@ function CopyOptions({ onCopy, disabled }) {
         onClick={handleCopy}
         disabled={disabled}
       >
-        开始同步
+        开始复制
       </button>
+
+      <ConfirmDialog
+        show={showConfirm}
+        title="确认复制操作"
+        message="即将把源角色的配置文件复制到以下目标角色："
+        sourceRole={sourceRole}
+        targetRoles={targetRoles}
+        onConfirm={handleConfirm}
+        onCancel={handleCancel}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import PathSelector from './components/PathSelector';
 import RoleSelector from './components/RoleSelector';
 import CopyOptions from './components/CopyOptions';
 import BackupManager from './components/BackupManager';
+import SuccessDialog from './components/SuccessDialog';
 import './App.css';
 
 function App() {
@@ -14,6 +15,8 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [showBackupManager, setShowBackupManager] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successInfo, setSuccessInfo] = useState({ title: '', message: '', details: [] });
 
   // 加载配置
   useEffect(() => {
@@ -74,7 +77,7 @@ function App() {
     }
 
     setLoading(true);
-    setMessage('正在同步...');
+    setMessage('正在复制...');
 
     try {
       const result = await ApiService.copyMultiple(
@@ -84,16 +87,44 @@ function App() {
       );
 
       if (result.success) {
-        const msg = `同步完成！成功: ${result.success_count} 个`;
+        const roleDisplay = (role) => `${role.account} - ${role.region} - ${role.server} - ${role.role}`;
+
+        // 构建详细信息
+        const details = [
+          `📤 源角色: ${roleDisplay(sourceRole)}`,
+          '',
+          `✅ 成功复制到 ${result.success_count} 个角色:`,
+        ];
+
+        // 添加成功的目标角色列表
+        const successRoles = targetRoles.filter(target =>
+          !result.failed.some(f => f.role === roleDisplay(target))
+        );
+        successRoles.forEach((role, index) => {
+          details.push(`  ${index + 1}. ${roleDisplay(role)}`);
+        });
+
         if (result.failed.length > 0) {
-          const failedInfo = result.failed.map(f => f.role).join(', ');
-          setMessage(`${msg}，失败: ${result.failed.length} 个 (${failedInfo})`);
-        } else {
-          setMessage(msg);
+          details.push('');
+          details.push(`❌ 复制失败 ${result.failed.length} 个角色:`);
+          result.failed.forEach((f, index) => {
+            details.push(`  ${index + 1}. ${f.role}: ${f.error}`);
+          });
         }
+
+        // 显示成功对话框
+        setSuccessInfo({
+          title: '复制完成',
+          message: result.failed.length > 0
+            ? `已完成复制，部分角色复制失败`
+            : '所有角色已成功复制！',
+          details
+        });
+        setShowSuccess(true);
+        setMessage('');
       }
     } catch (error) {
-      setMessage(`同步失败: ${error.message}`);
+      setMessage(`复制失败: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -132,6 +163,8 @@ function App() {
             />
 
             <CopyOptions
+              sourceRole={sourceRole}
+              targetRoles={targetRoles}
               onCopy={handleCopy}
               disabled={loading || !sourceRole || targetRoles.length === 0}
             />
@@ -151,6 +184,16 @@ function App() {
 
       {showBackupManager && (
         <BackupManager onClose={() => setShowBackupManager(false)} />
+      )}
+
+      {showSuccess && (
+        <SuccessDialog
+          show={showSuccess}
+          title={successInfo.title}
+          message={successInfo.message}
+          details={successInfo.details}
+          onClose={() => setShowSuccess(false)}
+        />
       )}
     </div>
   );

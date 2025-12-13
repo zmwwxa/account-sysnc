@@ -28,6 +28,25 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
     }
   };
 
+  const handleSourceSearchChange = (e) => {
+    const searchValue = e.target.value;
+    setSourceSearch(searchValue);
+
+    // 搜索后自动选择第一个匹配的角色
+    if (searchValue) {
+      const filtered = roles.filter(role =>
+        role.role.toLowerCase().includes(searchValue.toLowerCase())
+      );
+      if (filtered.length > 0) {
+        const firstRole = filtered[0];
+        onSourceChange(firstRole);
+        // 清除目标选择中的该角色
+        const newTargets = targetRoles.filter(t => t.path !== firstRole.path);
+        onTargetChange(newTargets);
+      }
+    }
+  };
+
   const handleSourceChange = (e) => {
     const role = roles.find(r => r.path === e.target.value);
     onSourceChange(role);
@@ -80,7 +99,7 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
           className="search-input"
           placeholder="搜索角色名..."
           value={sourceSearch}
-          onChange={(e) => setSourceSearch(e.target.value)}
+          onChange={handleSourceSearchChange}
           disabled={disabled}
         />
 
