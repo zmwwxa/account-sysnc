@@ -1,6 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
+const kill = require('tree-kill');
 
 let mainWindow;
 let pythonProcess;
@@ -126,9 +127,15 @@ app.whenReady().then(async () => {
 
 // 应用退出
 app.on('window-all-closed', () => {
-  // 关闭 Python 进程
-  if (pythonProcess) {
-    pythonProcess.kill();
+  // 关闭 Python 进程及其所有子进程
+  if (pythonProcess && pythonProcess.pid) {
+    kill(pythonProcess.pid, 'SIGTERM', (err) => {
+      if (err) {
+        console.error('Failed to kill process tree:', err);
+        // 如果 SIGTERM 失败，使用 SIGKILL 强制终止
+        kill(pythonProcess.pid, 'SIGKILL');
+      }
+    });
   }
 
   if (process.platform !== 'darwin') {
@@ -137,7 +144,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('will-quit', () => {
-  if (pythonProcess) {
-    pythonProcess.kill();
+  if (pythonProcess && pythonProcess.pid) {
+    kill(pythonProcess.pid, 'SIGKILL');
   }
 });
