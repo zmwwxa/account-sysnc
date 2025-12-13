@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ApiService from '../api';
 
 function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTargetChange, disabled }) {
+  const [sourceSearch, setSourceSearch] = useState('');
+  const [targetSearch, setTargetSearch] = useState('');
   const [filters, setFilters] = useState({
     account: '',
     region: '',
@@ -49,10 +51,18 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
     }
   };
 
-  const filteredRoles = roles.filter(role => {
+  const filteredSourceRoles = roles.filter(role => {
+    if (sourceSearch && !role.role.toLowerCase().includes(sourceSearch.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
+
+  const filteredTargetRoles = roles.filter(role => {
     if (filters.account && role.account !== filters.account) return false;
     if (filters.region && role.region !== filters.region) return false;
     if (filters.server && role.server !== filters.server) return false;
+    if (targetSearch && !role.role.toLowerCase().includes(targetSearch.toLowerCase())) return false;
     if (sourceRole && role.path === sourceRole.path) return false; // 排除源角色
     return true;
   });
@@ -64,6 +74,16 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
     <div className="role-selector">
       <div className="source-section">
         <h2>源角色</h2>
+
+        <input
+          type="text"
+          className="search-input"
+          placeholder="搜索角色名..."
+          value={sourceSearch}
+          onChange={(e) => setSourceSearch(e.target.value)}
+          disabled={disabled}
+        />
+
         <select
           className="role-select"
           value={sourceRole?.path || ''}
@@ -71,7 +91,7 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
           disabled={disabled}
         >
           <option value="">请选择源角色</option>
-          {roles.map(role => (
+          {filteredSourceRoles.map(role => (
             <option key={role.path} value={role.path}>
               {roleDisplay(role)}
             </option>
@@ -81,6 +101,15 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
 
       <div className="target-section">
         <h2>目标角色（可多选）</h2>
+
+        <input
+          type="text"
+          className="search-input"
+          placeholder="搜索角色名..."
+          value={targetSearch}
+          onChange={(e) => setTargetSearch(e.target.value)}
+          disabled={disabled}
+        />
 
         <div className="filters">
           <select
@@ -118,7 +147,7 @@ function RoleSelector({ roles, sourceRole, targetRoles, onSourceChange, onTarget
         </div>
 
         <div className="role-list">
-          {filteredRoles.map(role => (
+          {filteredTargetRoles.map(role => (
             <div
               key={role.path}
               className={`role-item ${targetRoles.some(t => t.path === role.path) ? 'selected' : ''}`}
