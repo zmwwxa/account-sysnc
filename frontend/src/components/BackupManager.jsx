@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import ApiService from '../api';
 
+const { ipcRenderer } = window.require('electron');
+
 function BackupManager({ onClose }) {
   const [backups, setBackups] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -33,6 +35,20 @@ function BackupManager({ onClose }) {
       }
     } catch (error) {
       alert(`删除失败: ${error.message}`);
+    }
+  };
+
+  const handleOpenBackupFolder = async () => {
+    try {
+      const result = await ApiService.getBackupPath();
+      if (result.success) {
+        const openResult = await ipcRenderer.invoke('shell:openPath', result.path);
+        if (!openResult.success) {
+          alert(`打开文件夹失败: ${openResult.error}`);
+        }
+      }
+    } catch (error) {
+      alert(`获取备份路径失败: ${error.message}`);
     }
   };
 
@@ -78,6 +94,9 @@ function BackupManager({ onClose }) {
         </div>
 
         <div className="modal-footer">
+          <button className="btn-primary" onClick={handleOpenBackupFolder}>
+            打开备份位置
+          </button>
           <button className="btn-secondary" onClick={onClose}>
             关闭
           </button>

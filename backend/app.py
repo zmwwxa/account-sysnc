@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from pathlib import Path
 import sys
+import os
 
 # 添加父目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -14,6 +15,11 @@ from backend import (
     PathResolver, RoleScanner, RoleCopier, BackupManager,
     ConfigManager, RoleInfo
 )
+
+# 获取项目根目录
+PROJECT_ROOT = Path(__file__).parent.parent
+# 备份目录位置：项目根目录下的 backups 文件夹
+BACKUP_DIR = PROJECT_ROOT / "backups"
 
 app = Flask(__name__)
 CORS(app)  # 允许跨域请求
@@ -66,7 +72,7 @@ def resolve_game_path():
         # 初始化扫描器和备份管理器
         global role_scanner, backup_manager
         role_scanner = RoleScanner(str(userdata_path))
-        backup_manager = BackupManager(str(userdata_path))
+        backup_manager = BackupManager(str(userdata_path), backup_dir=str(BACKUP_DIR))
 
         return jsonify({
             'success': True,
@@ -182,6 +188,18 @@ def copy_multiple():
 
 # ===== 备份相关 API =====
 
+@app.route('/api/backup/get-path', methods=['GET'])
+def get_backup_path():
+    """获取备份目录路径"""
+    if not backup_manager:
+        return jsonify({'error': '未设置游戏路径'}), 400
+
+    return jsonify({
+        'success': True,
+        'path': str(backup_manager.backup_dir)
+    })
+
+
 @app.route('/api/backup/list', methods=['GET'])
 def list_backups():
     """列出所有备份"""
@@ -261,7 +279,7 @@ def main():
     if userdata_path and Path(userdata_path).exists():
         global role_scanner, backup_manager
         role_scanner = RoleScanner(userdata_path)
-        backup_manager = BackupManager(userdata_path)
+        backup_manager = BackupManager(userdata_path, backup_dir=str(BACKUP_DIR))
 
     app.run(host='127.0.0.1', port=5000, debug=False)
 

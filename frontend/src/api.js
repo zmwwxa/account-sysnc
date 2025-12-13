@@ -85,6 +85,10 @@ class ApiService {
 
   // ===== 备份相关 =====
 
+  static async getBackupPath() {
+    return this.request('/backup/get-path');
+  }
+
   static async listBackups(limit = null) {
     const params = limit ? `?limit=${limit}` : '';
     return this.request(`/backup/list${params}`);

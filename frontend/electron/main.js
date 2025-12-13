@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -81,6 +81,19 @@ ipcMain.handle('dialog:openFile', async (event, filters) => {
     return result.filePaths[0];
   }
   return null;
+});
+
+// 打开文件夹
+ipcMain.handle('shell:openPath', async (event, folderPath) => {
+  try {
+    const result = await shell.openPath(folderPath);
+    if (result) {
+      return { success: false, error: result };
+    }
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
 });
 
 // 应用启动

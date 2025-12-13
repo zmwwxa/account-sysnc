@@ -12,20 +12,27 @@ from .models import RoleInfo, BackupInfo
 class BackupManager:
     """备份管理器"""
 
-    def __init__(self, userdata_path: str, max_backups: int = 5):
+    def __init__(self, userdata_path: str, max_backups: int = 5, backup_dir: str = None):
         """
         初始化备份管理器
 
         Args:
             userdata_path: userdata 目录路径
             max_backups: 每个角色最多保留的备份数量
+            backup_dir: 自定义备份目录路径，如果不指定则使用默认路径
         """
         self.userdata_path = Path(userdata_path)
-        self.backup_dir = self.userdata_path.parent / "userdata_backup"
+
+        # 如果指定了备份目录，使用指定的；否则使用默认的游戏目录下的备份
+        if backup_dir:
+            self.backup_dir = Path(backup_dir)
+        else:
+            self.backup_dir = self.userdata_path.parent / "userdata_backup"
+
         self.max_backups = max_backups
 
         # 确保备份目录存在
-        self.backup_dir.mkdir(exist_ok=True)
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
 
     def backup_role(self, role: RoleInfo) -> dict:
         """
